@@ -1,0 +1,18 @@
+{
+    "./Project1/hello_world.cpp": [
+        {
+            "code": "#pragma once\n#include <iostream>\n\n",
+            "column": 9,
+            "file": "./compilecode/Project1/hello_world.cpp",
+            "line": 1,
+            "warning": "#pragma once in main file"
+        },
+        {
+            "code": "    char *ptr2;\n    ptr1 = &val;\n    ptr2 = &val;\n\n    std::cout << \"Hello World!!!\" << std::endl\n",
+            "column": 12,
+            "error": "cannot convert 'float*' to 'char*' in assignment",
+            "file": "./compilecode/Project1/hello_world.cpp",
+            "line": 9
+        }
+    ]
+}

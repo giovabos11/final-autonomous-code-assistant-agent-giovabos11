@@ -1,6 +1,6 @@
-import openai
-from openai import OpenAI
+import requests
 import argparse
+import json
 
 # Take arguments
 argParser = argparse.ArgumentParser()
@@ -12,33 +12,33 @@ args = argParser.parse_args()
 if not args.key:
     args.key = "not needed for a local LLM"
 
-client = OpenAI(
-    #base_url = "https://api.openai.com/v1"
-    #base_url = "http://localhost:4891/v1",
-    base_url = args.ip,
-    api_key = args.key,
-)
+headers = {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer ' + args.key,
+}
 
-# model = "gpt4all-falcon-q4_0"
-# model = "mistral-7b-instruct-v0.1.Q4_0"
+data = {
+    'model': args.model,
+    'messages': [
+        {
+            'role': 'user',
+            'content': args.prompt,
+        },
+    ],
+    'max_tokens': 500,
+    'response_format': {
+        'type': 'json_object'
+    }
+}
 
-# Make the API request
-try:
-    completion = client.completions.create(
-        model=args.model,
-        prompt=args.prompt,
-        max_tokens=500,
-    )
-except openai.APIConnectionError as e:
-    print("Connection error!")
+try :
+    response = requests.post(args.ip, headers = headers, json = data)
+except requests.exceptions.ConnectionError:
+    print("Connection error")
     exit()
 
-# Print the generated completion
-#print(completion)
-#print("\n\n\n")
-#print(completion.choices[0].text)
-#print("\n\n\n")
-#print(dict(completion).get('usage'))
-#print("\n\n\n")
-print(completion.model_dump_json(indent=2))
-#print("\n\n\n")
+if not response.status_code == 200:
+    print("Connection error")
+    exit()
+
+print(json.dumps(response.json()))
