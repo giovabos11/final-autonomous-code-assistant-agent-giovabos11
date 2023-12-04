@@ -129,7 +129,7 @@ void generateJson(string &str, json &outputJson)
 // Parse JSON output Job.
 // string output: A JSON object that contains the whole output of compilation, which may have one or
 //                more errors in JSON format, and the project name.
-// Returns a JSON that contains the error for each file formatted in JSON and the project name
+// Returns a JSON that contains the error for each file formatted in JSON and the project name.
 string parseFile(string output)
 {
     json outputJson = json::parse(output);
@@ -157,7 +157,7 @@ string parseFile(string output)
 
 // Output errors to a file.
 // string output: A JSON object that contains the formatted error for each file, and the project name.
-// Returns a string that indicates that the job is done
+// Returns a string that indicates that the job is done.
 string outputToFile(string output)
 {
     json outputJson = json::parse(output);
@@ -170,7 +170,7 @@ string outputToFile(string output)
 
 // Job that calls LLM.
 // string a: A JSON object that contains an ip adress, a prompt, a model name and an optional api key.
-// Returns a string, which is either the model response or an error message
+// Returns a string, which is either the model response or an error message.
 string callLLM(string a)
 {
     json input = json::parse(a);
