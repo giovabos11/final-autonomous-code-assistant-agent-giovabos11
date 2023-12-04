@@ -125,7 +125,7 @@ int main()
     js.RegisterJob("call_LLM", new Job(callLLM, 1));
 
     // Import prompt and error files
-    string prompt1, prompt2, error1, error2, error3;
+    string prompt1, error1, error2, error3;
     prompt1 = openFile("../Data/gpt4all-mistral-prompt.txt");
     error1 = openFile("../Data/error1.json");
     error2 = openFile("../Data/error2.json");
@@ -144,7 +144,8 @@ int main()
     // Get Job statuses
     cout << "Job ID " << job1ID << " status: " << json::parse(js.JobStatus(job1))["status"] << endl;
     cout << "Job ID " << job2ID << " status: " << json::parse(js.JobStatus(job2))["status"] << endl;
-    cout << "Job ID " << job3ID << " status: " << json::parse(js.JobStatus(job3))["status"] << endl;
+    cout << "Job ID " << job3ID << " status: " << json::parse(js.JobStatus(job3))["status"] << endl
+         << endl;
 
     // Check job status and try to complete the jobs
     string output1, output2, output3;
