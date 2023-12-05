@@ -49,7 +49,7 @@ string compile(string command)
 
     // Store output and project name in a json object
     temp["output"] = output;
-    temp["file_name"] = projectName + ".json";
+    temp["file_name"] = "output_" + projectName + ".json";
 
     return temp.dump();
 }
@@ -134,7 +134,7 @@ string parseFile(string output)
 {
     json outputJson = json::parse(output);
     json tempJson;
-    tempJson["errors"] = {};
+    tempJson["content"] = {};
     // Split the different errors in separete json objects to parse
     int startIndex = 0, endIndex = 0;
     string temp;
@@ -145,7 +145,7 @@ string parseFile(string output)
             endIndex = i;
             temp = "";
             temp.append(outputJson["output"], startIndex, endIndex - startIndex);
-            generateJson(temp, tempJson["errors"]);
+            generateJson(temp, tempJson["content"]);
             startIndex = endIndex + 1;
         }
     }
@@ -162,8 +162,21 @@ string outputToFile(string output)
 {
     json outputJson = json::parse(output);
     // Write to file
-    ofstream o("../Data/output_" + outputJson["file_name"].dump());
-    o << setw(4) << outputJson["errors"] << endl;
+    ofstream o("../Data/" + outputJson["file_name"].dump().substr(1, outputJson["file_name"].dump().size() - 2));
+
+    // Clean content before printing to file
+    string content = outputJson["content"].dump();
+    content = content.substr(1, content.size() - 2);
+    size_t start_pos = 0;
+    string from = "\\n", to = "\n";
+    while ((start_pos = content.find(from, start_pos)) != std::string::npos)
+    {
+        content.replace(start_pos, from.length(), to);
+        start_pos += to.length();
+    }
+    // Print content to file
+    o << content << endl;
+
     o.close();
     return "Done!";
 }
@@ -296,54 +309,58 @@ int main()
     js.RegisterJob("output_to_file", new Job(outputToFile, 4));
 
     // Import prompt and error files
-    string prompt1, error1, error2, error3;
-    prompt1 = openFile("../Data/gpt4all-mistral-prompt.txt");
-    error1 = openFile("../Data/error1.json");
-    error2 = openFile("../Data/error2.json");
-    error3 = openFile("../Data/error3.json");
+    string promptFlowscript;
+    promptFlowscript = openFile("../Data/gpt4all-mistral-prompt.txt");
 
-    // Spin off jobs
-    // string job1 = js.CreateJob("{\"job_type\": \"call_LLM\", \"input\": {\"ip\": \"http://localhost:4891/v1/chat/completions\", \"prompt\": \"" + prompt1 + error1 + "\", \"model\": \"mistral-7b-instruct-v0.1.Q4_0\"}}");
-    // string job2 = js.CreateJob("{\"job_type\": \"call_LLM\", \"input\": {\"ip\": \"http://localhost:4891/v1/chat/completions\", \"prompt\": \"" + prompt1 + error2 + "\", \"model\": \"mistral-7b-instruct-v0.1.Q4_0\"}}");
-    // string job3 = js.CreateJob("{\"job_type\": \"call_LLM\", \"input\": {\"ip\": \"http://localhost:4891/v1/chat/completions\", \"prompt\": \"" + prompt1 + error3 + "\", \"model\": \"mistral-7b-instruct-v0.1.Q4_0\"}}");
-    string job1 = js.CreateJob("{\"job_type\": \"compile\", \"input\": \"MinGW32-make project1\"}");
+    // Spin off job and get job ID
+    string jobFlowscript = js.CreateJob("{\"job_type\": \"call_LLM\", \"input\": {\"ip\": \"http://localhost:4891/v1/chat/completions\", \"prompt\": \"" + promptFlowscript + "\", \"model\": \"mistral-7b-instruct-v0.1.Q4_0\"}}");
+    int jobFlowscriptID = json::parse(jobFlowscript)["id"];
 
-    // Get job IDs
-    int job1ID = json::parse(job1)["id"];
-    // int job2ID = json::parse(job2)["id"];
-    // int job3ID = json::parse(job3)["id"];
-
-    // Get Job statuses
-    cout << "Job ID " << job1ID << " status: " << json::parse(js.JobStatus(job1))["status"] << endl
-         // cout << "Job ID " << job2ID << " status: " << json::parse(js.JobStatus(job2))["status"] << endl;
-         // cout << "Job ID " << job3ID << " status: " << json::parse(js.JobStatus(job3))["status"] << endl
-         << endl;
+    cout << "Generate FlowScript Job running:" << endl;
 
     // Check job status and try to complete the jobs
-    string output1, output2, output3;
-
     while (json::parse(js.AreJobsRunning())["are_jobs_running"])
     {
         //  Wait to complete all the jobs
     }
 
     // Get job outputs
-    output1 = json::parse(js.CompleteJob(job1))["output"];
-    // output2 = json::parse(js.CompleteJob(job2))["output"];
-    // output3 = json::parse(js.CompleteJob(job3))["output"];
+    string outputFlowscript;
+    outputFlowscript = json::parse(js.CompleteJob(jobFlowscript))["output"];
 
-    // Print job outputs
-    cout << "Job ID " << job1ID << " output: " << output1 << endl
+    // Print job output
+    cout << "Job ID " << jobFlowscriptID << " output: " << outputFlowscript << endl
          << endl;
-    // cout << "Job ID " << job2ID << " output: " << output2 << endl
-    //      << endl;
-    // cout << "Job ID " << job3ID << " output: " << output3 << endl
-    //      << endl;
 
-    // Get Job statuses
-    cout << "Job ID " << job1ID << " status: " << json::parse(js.JobStatus(job1))["status"] << endl;
-    // cout << "Job ID " << job2ID << " status: " << json::parse(js.JobStatus(job2))["status"] << endl;
-    // cout << "Job ID " << job3ID << " status: " << json::parse(js.JobStatus(job3))["status"] << endl;
+    // Clean LLM output
+    outputFlowscript = outputFlowscript.substr(1, outputFlowscript.size() - 2);
+    size_t start_pos = 0;
+    string from = "`", to = "";
+    while ((start_pos = outputFlowscript.find(from, start_pos)) != std::string::npos)
+    {
+        outputFlowscript.replace(start_pos, from.length(), to);
+        start_pos += to.length();
+    }
+
+    // Spin off job and get job ID
+    string jobFlowscriptFile = js.CreateJob("{\"job_type\": \"output_to_file\", \"input\": {\"file_name\" : \"compiling_pipeline.dot\", \"content\": \"" + outputFlowscript + "\"}}");
+    int jobFlowscriptFileID = json::parse(jobFlowscriptFile)["id"];
+
+    cout << "FlowScript to File Job running:" << endl;
+
+    // Check job status and try to complete the jobs
+    while (json::parse(js.AreJobsRunning())["are_jobs_running"])
+    {
+        //  Wait to complete all the jobs
+    }
+
+    // Get job outputs
+    string outputFlowscriptFile;
+    outputFlowscriptFile = json::parse(js.CompleteJob(jobFlowscriptFile))["output"];
+
+    // Print job output
+    cout << "Job ID " << jobFlowscriptFileID << " output: " << outputFlowscriptFile << endl
+         << endl;
 
     // Destroy Job System
     js.DestroyJobSystem();

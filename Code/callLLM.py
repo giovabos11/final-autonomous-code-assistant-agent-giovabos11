@@ -21,14 +21,19 @@ data = {
     'model': args.model,
     'messages': [
         {
+            'role': 'system',
+            'content': ''
+        },
+        {
             'role': 'user',
             'content': args.prompt,
         },
     ],
-    'max_tokens': 500,
+    'max_tokens': 4096,
     'response_format': {
         'type': 'json_object'
-    }
+    },
+    'temperature': 0.7,
 }
 
 try :
