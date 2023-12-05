@@ -219,9 +219,19 @@ string outputToFile(string output)
 
     // Clean content before printing to file
     string content = outputJson["content"].dump();
-    content = content.substr(1, content.size() - 2);
+    string from, to;
+    if (outputJson["content"].is_string())
+    {
+        cleanJson(content);
+        from = "\\n";
+        to = "\n";
+    }
+    else
+    {
+        from = "\\\\n";
+        to = "\\n";
+    }
     size_t start_pos = 0;
-    string from = "\\n", to = "\n";
     while ((start_pos = content.find(from, start_pos)) != std::string::npos)
     {
         content.replace(start_pos, from.length(), to);
