@@ -2,11 +2,35 @@
 
 using namespace std;
 
+// Function to clean scaped JSON
+void cleanJson(string &str)
+{
+    // Remove double quotes surrounding the string
+    str = str.substr(1, str.size() - 2);
+    // Replace \" to "
+    size_t start_pos = 0;
+    string from = "\\\"", to = "\"";
+    while ((start_pos = str.find(from, start_pos)) != std::string::npos)
+    {
+        str.replace(start_pos, from.length(), to);
+        start_pos += to.length();
+    }
+    // Replace \\" to \"
+    start_pos = 0;
+    from = "\\\\\"", to = "\\\"";
+    while ((start_pos = str.find(from, start_pos)) != std::string::npos)
+    {
+        str.replace(start_pos, from.length(), to);
+        start_pos += to.length();
+    }
+}
+
 // Compile Job.
 // string command: A Makefile command.
 // Returns a JSON object containing the compile output and the project name.
 string compile(string command)
 {
+    cleanJson(command);
     json temp;
     string output;
     int returnCode;
@@ -69,7 +93,7 @@ void generateJson(string &str, json &outputJson)
     }
     catch (const exception &e)
     {
-        std::cout << "Error parsing the console output: Invalid json format" << std::endl;
+        cout << "Error parsing the console output: Invalid json format" << std::endl;
         return;
     }
 
@@ -132,19 +156,32 @@ void generateJson(string &str, json &outputJson)
 // Returns a JSON that contains the error for each file formatted in JSON and the project name.
 string parseFile(string output)
 {
+    cleanJson(output);
     json outputJson = json::parse(output);
     json tempJson;
     tempJson["content"] = {};
+
+    // Clean errors JSON
+    string errors = outputJson["output"].dump();
+    cleanJson(errors);
+    size_t start_pos = 0;
+    string from = "\\\\n", to = "\n";
+    while ((start_pos = errors.find(from, start_pos)) != std::string::npos)
+    {
+        errors.replace(start_pos, from.length(), to);
+        start_pos += to.length();
+    }
+
     // Split the different errors in separete json objects to parse
     int startIndex = 0, endIndex = 0;
     string temp;
-    for (int i = 0; i <= outputJson["output"].size(); i++)
+    for (int i = 0; i <= errors.size(); i++)
     {
-        if (outputJson["output"][i] == '\n' || i == outputJson["output"].size())
+        if (errors[i] == '\n' || i == errors.size())
         {
             endIndex = i;
             temp = "";
-            temp.append(outputJson["output"], startIndex, endIndex - startIndex);
+            temp.append(errors, startIndex, endIndex - startIndex);
             generateJson(temp, tempJson["content"]);
             startIndex = endIndex + 1;
         }
@@ -161,7 +198,23 @@ string parseFile(string output)
 string outputToFile(string output)
 {
     json outputJson = json::parse(output);
-    // Write to file
+    try
+    {
+        outputJson["content"];
+    }
+    catch (const exception &e)
+    {
+        cleanJson(output);
+        try
+        {
+            outputJson = json::parse(output);
+        }
+        catch (const exception &e)
+        {
+            return "Error generating the output file: Invalid json format";
+        }
+    }
+    //  Write to file
     ofstream o("../Data/" + outputJson["file_name"].dump().substr(1, outputJson["file_name"].dump().size() - 2));
 
     // Clean content before printing to file
@@ -304,43 +357,48 @@ int main()
 
     // Register all jobs
     js.RegisterJob("call_LLM", new Job(callLLM, 1));
-    js.RegisterJob("compile", new Job(compile, 2));
-    js.RegisterJob("parse_file", new Job(parseFile, 3));
-    js.RegisterJob("output_to_file", new Job(outputToFile, 4));
+    js.RegisterJob("output_to_file", new Job(outputToFile, 2));
+
+    /// ---------------------- LLM FLOWSCRIPT GENERATION ---------------------- ///
 
     // Import prompt and error files
-    string promptFlowscript;
-    promptFlowscript = openFile("../Data/gpt4all-mistral-prompt.txt");
+    // string promptFlowscript;
+    // promptFlowscript = openFile("../Data/gpt4all-mistral-prompt.txt");
 
-    // Spin off job and get job ID
-    string jobFlowscript = js.CreateJob("{\"job_type\": \"call_LLM\", \"input\": {\"ip\": \"http://localhost:4891/v1/chat/completions\", \"prompt\": \"" + promptFlowscript + "\", \"model\": \"mistral-7b-instruct-v0.1.Q4_0\"}}");
-    int jobFlowscriptID = json::parse(jobFlowscript)["id"];
+    // // Spin off job and get job ID
+    // string jobFlowscript = js.CreateJob("{\"job_type\": \"call_LLM\", \"input\": {\"ip\": \"http://localhost:4891/v1/chat/completions\", \"prompt\": \"" + promptFlowscript + "\", \"model\": \"mistral-7b-instruct-v0.1.Q4_0\"}}");
+    // int jobFlowscriptID = json::parse(jobFlowscript)["id"];
 
-    cout << "Generate FlowScript Job running:" << endl;
+    // cout << "Generate FlowScript Job running:" << endl;
 
-    // Check job status and try to complete the jobs
-    while (json::parse(js.AreJobsRunning())["are_jobs_running"])
-    {
-        //  Wait to complete all the jobs
-    }
+    // // Check job status and try to complete the jobs
+    // while (json::parse(js.AreJobsRunning())["are_jobs_running"])
+    // {
+    //     //  Wait to complete all the jobs
+    // }
 
-    // Get job outputs
+    // // Get job outputs
     string outputFlowscript;
-    outputFlowscript = json::parse(js.CompleteJob(jobFlowscript))["output"];
+    // outputFlowscript = json::parse(js.CompleteJob(jobFlowscript))["output"];
 
-    // Print job output
-    cout << "Job ID " << jobFlowscriptID << " output: " << outputFlowscript << endl
-         << endl;
+    // // Print job output
+    // cout << "Job ID " << jobFlowscriptID << " output: " << outputFlowscript << endl
+    //      << endl;
 
-    // Clean LLM output
-    outputFlowscript = outputFlowscript.substr(1, outputFlowscript.size() - 2);
-    size_t start_pos = 0;
-    string from = "`", to = "";
-    while ((start_pos = outputFlowscript.find(from, start_pos)) != std::string::npos)
-    {
-        outputFlowscript.replace(start_pos, from.length(), to);
-        start_pos += to.length();
-    }
+    // // Clean LLM output
+    // outputFlowscript = outputFlowscript.substr(1, outputFlowscript.size() - 2);
+    // size_t start_pos = 0;
+    // string from = "`", to = "";
+    // while ((start_pos = outputFlowscript.find(from, start_pos)) != std::string::npos)
+    // {
+    //     outputFlowscript.replace(start_pos, from.length(), to);
+    //     start_pos += to.length();
+    // }
+
+    /// ---------------------- LLM FLOWSCRIPT TO FILE ---------------------- ///
+
+    /// TEST: manually set outputFlowscript to the right FlowScript file to test the rest of the code
+    outputFlowscript = "digraph jobs {\\n    input -> compile -> parse_file -> output_to_file -> output\\n}\\n";
 
     // Spin off job and get job ID
     string jobFlowscriptFile = js.CreateJob("{\"job_type\": \"output_to_file\", \"input\": {\"file_name\" : \"compiling_pipeline.dot\", \"content\": \"" + outputFlowscript + "\"}}");
@@ -361,6 +419,48 @@ int main()
     // Print job output
     cout << "Job ID " << jobFlowscriptFileID << " output: " << outputFlowscriptFile << endl
          << endl;
+
+    /// ---------------------- RUN FLOWSCRIPT TO GET ERRORS ---------------------- ///
+
+    // Create a new interpreter object
+    Interpreter interpreter;
+
+    // Load flowscript file
+    interpreter.loadFile("../Data/compiling_pipeline.dot");
+
+    // Register all jobs
+    interpreter.registerJob("compile", new Job(compile, 3));
+    interpreter.registerJob("parse_file", new Job(parseFile, 4));
+    interpreter.registerJob("output_to_file", new Job(outputToFile, 5));
+
+    // Pass the input
+#ifdef __linux__
+    interpreter.setInput("make project1");
+#elif _WIN32
+    interpreter.setInput("MinGW32-make project1");
+#else
+    interpreter.setInput("make project1");
+#endif
+
+    // Parse flowscript file
+    interpreter.parse();
+
+    // If no error code, run flowscript
+    if (interpreter.getErrorCode() == 0)
+    {
+        cout << "Compilation Output: " << interpreter.run() << endl;
+    }
+    // Otherwise, print error details
+    else
+    {
+        cout << "Couldn't compile flowscript: " << endl;
+        cout << interpreter.getErrorMessage() << endl;
+        cout << "Error line: " << interpreter.getErrorLine() << endl;
+
+        // Destroy Job System
+        js.DestroyJobSystem();
+        return 0;
+    }
 
     // Destroy Job System
     js.DestroyJobSystem();

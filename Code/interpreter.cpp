@@ -104,8 +104,12 @@ void Interpreter::parse()
                 return;
             }
 
+            // Check for keyword "digraph"
+            if (leftToken == "digraph")
+                continue;
+
             // Process name
-            else if (std::isalnum(c))
+            else if (std::isalnum(c) || c == '_')
                 if (left)
                     leftToken += c;
                 else
