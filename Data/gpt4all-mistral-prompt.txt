@@ -1,18 +1,8 @@
-The task is to fix the following C++ code with the given error message and provide a description of the resolution of the error in JSON format.
-The fixed code should be contained in the JSON output.
-The input will be formatted in JSON.
-The note message will help a lot in order to figure out the error.
-The line and column numbers are also provided in the JSON object.
-The source C++ code is provided and it is contained in the "code" label of the JSON object provided.
-The error message is in the "error" label of the JSON object provided.
-The note message is in the "note" label of the JSON object provided, if any.
+Assume FlowScript is a new programming language based on the Dot programming language. An example of FlowScript code to execute three jobs in order: "job1", "job2", and "job3", is the following :
 
-Example:
-{"./Project1/Dog.cpp": [{"code": "    ptr2 = &val;\n\n    std::cout << \"Hello World!!!\" << std::endl\n    return 0;\n}\n","column": 47,"error": "expected ';' before 'return'","file": "./compilecode/Project1/hello_world.cpp","line": 11}]}
+digraph jobs {
+    input -> job1 -> job2 -> job3 -> output
+}
 
-Response:
-{"code": "    ptr2 = &val;\n\n    std::cout << \"Hello World!!!\" << std::endl;\n    return 0;\n}\n", "resolution": "The error was caused by a missing semicolon in line 11, column 47. As a result, a semicolon was added after the std::endl statement in order to solve the compiler error."}
-
-End of Example
-
-Here is the task:
+Now, write FlowScript code to execute three jobs in the following order: "compile", "parse_file", and "output_to_file".
+Don't provide an explanation, only write the FlowScript. Don't include the word "flowscript" in the code.

@@ -49,7 +49,7 @@ string compile(string command)
 
     // Store output and project name in a json object
     temp["output"] = output;
-    temp["project_name"] = projectName;
+    temp["file_name"] = projectName + ".json";
 
     return temp.dump();
 }
@@ -150,7 +150,7 @@ string parseFile(string output)
         }
     }
 
-    tempJson["project_name"] = outputJson["project_name"];
+    tempJson["file_name"] = outputJson["file_name"];
 
     return tempJson.dump();
 }
@@ -162,7 +162,7 @@ string outputToFile(string output)
 {
     json outputJson = json::parse(output);
     // Write to file
-    ofstream o("../Data/output_" + outputJson["project_name"].dump() + ".json");
+    ofstream o("../Data/output_" + outputJson["file_name"].dump());
     o << setw(4) << outputJson["errors"] << endl;
     o.close();
     return "Done!";
