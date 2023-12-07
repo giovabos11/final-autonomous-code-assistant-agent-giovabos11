@@ -514,7 +514,7 @@ int main()
         if (first)
             prompt = openFile("../Data/fix-code-prompt.txt");
         else
-            prompt = openFile("../Data/try-again-fix-code-prompt.txt");
+            prompt = openFile("../Data/fix-code-prompt.txt");
         string jobFixCode = js.CreateJob("{\"job_type\": \"call_LLM\", \"input\": {\"ip\": \"http://localhost:4891/v1/chat/completions\", \"prompt\": \"" + prompt + error + "\", \"model\": \"mistral-7b-instruct-v0.1.Q4_0\"}}");
         int jobFixCodeID = json::parse(jobFixCode)["id"];
 
