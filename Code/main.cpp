@@ -458,13 +458,8 @@ int main()
         // Parse flowscript file
         interpreter.parse();
 
-        // If no error code, run flowscript
-        if (interpreter.getErrorCode() == 0)
-        {
-            cout << "Compilation Output: " << interpreter.run() << endl;
-        }
-        // Otherwise, print error details
-        else
+        // If there is an error with the FlowScript, print error details
+        if (interpreter.getErrorCode() != 0)
         {
             cout << "Couldn't compile flowscript: " << endl;
             cout << interpreter.getErrorMessage() << endl;
@@ -475,6 +470,52 @@ int main()
             continue;
         }
     } while (interpreter.getErrorCode() == 1);
+
+    /// ---------------------- TEST CODE AND ITERATE UNTIL IT FIXES IT ---------------------- ///
+
+    json errorJson;
+    do
+    {
+        // First, check if project does not have errors
+        ifstream errorFile("../Data/output_project1.json");
+        string error = "", line = "";
+        if (errorFile.is_open())
+        {
+            while (getline(errorFile, line))
+                error += line + " ";
+            errorFile.close();
+        }
+        errorJson = json::parse(error);
+
+        // If no errors, finish the program
+        if (errorJson.is_null())
+        {
+            cout << "All errors fixed!" << endl;
+            return 0;
+        }
+
+        /// ---------------------- LLM TRIES TO GENERATE A FIX FOR THE CODE ---------------------- ///
+
+        // Call LLM to fix the code
+        error = openFile("../Data/output_project1.json");
+        string prompt = openFile("../Data/gpt4all-mistral-prompt.txt");
+        string jobFixCode = js.CreateJob("{\"job_type\": \"call_LLM\", \"input\": {\"ip\": \"http://localhost:4891/v1/chat/completions\", \"prompt\": \"" + prompt + error + "\", \"model\": \"mistral-7b-instruct-v0.1.Q4_0\"}}");
+        int jobFixCodeID = json::parse(jobFixCode)["id"];
+
+        // Check job status and try to complete the job
+        while (json::parse(js.AreJobsRunning())["are_jobs_running"])
+        {
+            //  Wait to complete all the jobs
+        }
+
+        // Get job output
+        string outputFixCode = json::parse(js.CompleteJob(jobFixCode))["output"];
+
+        // Fix code in the given line
+
+        // Run FlowScript to compile, parse file, and ouput the errors
+        cout << "Compilation Output: " << interpreter.run() << endl;
+    } while (!errorJson.is_null());
 
     // Destroy Job System
     js.DestroyJobSystem();

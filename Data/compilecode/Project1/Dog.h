@@ -2,7 +2,8 @@
 #include <iostream>
 
 class Dog
-public: 
-    Dog();
+{
+public:
+    void Dog();
     void bark();
 };

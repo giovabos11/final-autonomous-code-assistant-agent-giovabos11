@@ -1,4 +1,4 @@
-#pragma once
+// #pragma once
 #include <iostream>
 
 int main()
@@ -8,5 +8,6 @@ int main()
     ptr1 = &val;
     ptr2 = &val;
 
-    std::cout << "Hello World!!!" << std::endl return 0;
+    std::cout << "Hello World!!!" << std::endl;
+    return 0;
 }
