@@ -362,6 +362,9 @@ int main()
     // Create job system object
     JobSystemInterface js;
 
+    // Create interpreter object
+    Interpreter interpreter;
+
     js.CreateJobSystem();
     js.CreateThreads();
 
@@ -373,104 +376,105 @@ int main()
 
     // Import prompt and error files
     // string promptFlowscript;
-    // promptFlowscript = openFile("../Data/gpt4all-mistral-prompt.txt");
+    // promptFlowscript = openFile("../Data/flowscript-prompt.txt");
 
-    // // Spin off job and get job ID
-    // string jobFlowscript = js.CreateJob("{\"job_type\": \"call_LLM\", \"input\": {\"ip\": \"http://localhost:4891/v1/chat/completions\", \"prompt\": \"" + promptFlowscript + "\", \"model\": \"mistral-7b-instruct-v0.1.Q4_0\"}}");
-    // int jobFlowscriptID = json::parse(jobFlowscript)["id"];
-
-    // cout << "Generate FlowScript Job running:" << endl;
-
-    // // Check job status and try to complete the jobs
-    // while (json::parse(js.AreJobsRunning())["are_jobs_running"])
-    // {
-    //     //  Wait to complete all the jobs
-    // }
-
-    // // Get job outputs
-    string outputFlowscript;
-    // outputFlowscript = json::parse(js.CompleteJob(jobFlowscript))["output"];
-
-    // // Print job output
-    // cout << "Job ID " << jobFlowscriptID << " output: " << outputFlowscript << endl
-    //      << endl;
-
-    // // Clean LLM output
-    // outputFlowscript = outputFlowscript.substr(1, outputFlowscript.size() - 2);
-    // size_t start_pos = 0;
-    // string from = "`", to = "";
-    // while ((start_pos = outputFlowscript.find(from, start_pos)) != std::string::npos)
-    // {
-    //     outputFlowscript.replace(start_pos, from.length(), to);
-    //     start_pos += to.length();
-    // }
-
-    /// ---------------------- LLM FLOWSCRIPT TO FILE ---------------------- ///
-
-    /// TEST: manually set outputFlowscript to the right FlowScript file to test the rest of the code
-    outputFlowscript = "digraph jobs {\\n    input -> compile -> parse_file -> output_to_file -> output\\n}\\n";
-
-    // Spin off job and get job ID
-    string jobFlowscriptFile = js.CreateJob("{\"job_type\": \"output_to_file\", \"input\": {\"file_name\" : \"compiling_pipeline.dot\", \"content\": \"" + outputFlowscript + "\"}}");
-    int jobFlowscriptFileID = json::parse(jobFlowscriptFile)["id"];
-
-    cout << "FlowScript to File Job running:" << endl;
-
-    // Check job status and try to complete the jobs
-    while (json::parse(js.AreJobsRunning())["are_jobs_running"])
+    // Loop LLM Flowscript generation until it generates valid FlowScript
+    do
     {
-        //  Wait to complete all the jobs
-    }
+        // // Spin off job and get job ID
+        // string jobFlowscript = js.CreateJob("{\"job_type\": \"call_LLM\", \"input\": {\"ip\": \"http://localhost:4891/v1/chat/completions\", \"prompt\": \"" + promptFlowscript + "\", \"model\": \"mistral-7b-instruct-v0.1.Q4_0\"}}");
+        // int jobFlowscriptID = json::parse(jobFlowscript)["id"];
 
-    // Get job outputs
-    string outputFlowscriptFile;
-    outputFlowscriptFile = json::parse(js.CompleteJob(jobFlowscriptFile))["output"];
+        // cout << "Generate FlowScript Job running:" << endl;
 
-    // Print job output
-    cout << "Job ID " << jobFlowscriptFileID << " output: " << outputFlowscriptFile << endl
-         << endl;
+        // // Check job status and try to complete the jobs
+        // while (json::parse(js.AreJobsRunning())["are_jobs_running"])
+        // {
+        //     //  Wait to complete all the jobs
+        // }
 
-    /// ---------------------- RUN FLOWSCRIPT TO GET ERRORS ---------------------- ///
+        // // Get job outputs
+        string outputFlowscript;
+        // outputFlowscript = json::parse(js.CompleteJob(jobFlowscript))["output"];
 
-    // Create a new interpreter object
-    Interpreter interpreter;
+        // // Print job output
+        // cout << "Job ID " << jobFlowscriptID << " output: " << outputFlowscript << endl
+        //      << endl;
 
-    // Load flowscript file
-    interpreter.loadFile("../Data/compiling_pipeline.dot");
+        // // Clean LLM output
+        // outputFlowscript = outputFlowscript.substr(1, outputFlowscript.size() - 2);
+        // size_t start_pos = 0;
+        // string from = "`", to = "";
+        // while ((start_pos = outputFlowscript.find(from, start_pos)) != std::string::npos)
+        // {
+        //     outputFlowscript.replace(start_pos, from.length(), to);
+        //     start_pos += to.length();
+        // }
 
-    // Register all jobs
-    interpreter.registerJob("compile", new Job(compile, 3));
-    interpreter.registerJob("parse_file", new Job(parseFile, 4));
-    interpreter.registerJob("output_to_file", new Job(outputToFile, 5));
+        /// ---------------------- LLM FLOWSCRIPT TO FILE ---------------------- ///
 
-    // Pass the input
+        /// TEST: manually set outputFlowscript to the right FlowScript file to test the rest of the code
+        outputFlowscript = "digraph jobs {\\n    input -> compile -> parse_file -> output_to_file -> output\\n}\\n";
+
+        // Spin off job and get job ID
+        string jobFlowscriptFile = js.CreateJob("{\"job_type\": \"output_to_file\", \"input\": {\"file_name\" : \"compiling_pipeline.dot\", \"content\": \"" + outputFlowscript + "\"}}");
+        int jobFlowscriptFileID = json::parse(jobFlowscriptFile)["id"];
+
+        cout << "FlowScript to File Job running:" << endl;
+
+        // Check job status and try to complete the jobs
+        while (json::parse(js.AreJobsRunning())["are_jobs_running"])
+        {
+            //  Wait to complete all the jobs
+        }
+
+        // Get job outputs
+        string outputFlowscriptFile;
+        outputFlowscriptFile = json::parse(js.CompleteJob(jobFlowscriptFile))["output"];
+
+        // Print job output
+        cout << "Job ID " << jobFlowscriptFileID << " output: " << outputFlowscriptFile << endl
+             << endl;
+
+        /// ---------------------- RUN FLOWSCRIPT TO GET ERRORS ---------------------- ///
+
+        // Load flowscript file
+        interpreter.loadFile("../Data/compiling_pipeline.dot");
+
+        // Register all jobs for interpreter
+        interpreter.registerJob("compile", new Job(compile, 3));
+        interpreter.registerJob("parse_file", new Job(parseFile, 4));
+        interpreter.registerJob("output_to_file", new Job(outputToFile, 5));
+
+        // Pass the input
 #ifdef __linux__
-    interpreter.setInput("make project1");
+        interpreter.setInput("make project1");
 #elif _WIN32
-    interpreter.setInput("MinGW32-make project1");
+        interpreter.setInput("MinGW32-make project1");
 #else
-    interpreter.setInput("make project1");
+        interpreter.setInput("make project1");
 #endif
 
-    // Parse flowscript file
-    interpreter.parse();
+        // Parse flowscript file
+        interpreter.parse();
 
-    // If no error code, run flowscript
-    if (interpreter.getErrorCode() == 0)
-    {
-        cout << "Compilation Output: " << interpreter.run() << endl;
-    }
-    // Otherwise, print error details
-    else
-    {
-        cout << "Couldn't compile flowscript: " << endl;
-        cout << interpreter.getErrorMessage() << endl;
-        cout << "Error line: " << interpreter.getErrorLine() << endl;
+        // If no error code, run flowscript
+        if (interpreter.getErrorCode() == 0)
+        {
+            cout << "Compilation Output: " << interpreter.run() << endl;
+        }
+        // Otherwise, print error details
+        else
+        {
+            cout << "Couldn't compile flowscript: " << endl;
+            cout << interpreter.getErrorMessage() << endl;
+            cout << "Error line: " << interpreter.getErrorLine() << endl
+                 << endl;
 
-        // Destroy Job System
-        js.DestroyJobSystem();
-        return 0;
-    }
+            cout << "Generating flowscript again" << endl;
+            continue;
+        }
+    } while (interpreter.getErrorCode() == 1);
 
     // Destroy Job System
     js.DestroyJobSystem();
