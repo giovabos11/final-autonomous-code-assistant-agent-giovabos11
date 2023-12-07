@@ -372,6 +372,12 @@ int main()
     js.RegisterJob("call_LLM", new Job(callLLM, 1));
     js.RegisterJob("output_to_file", new Job(outputToFile, 2));
 
+    // Ask the user to input a project
+    cout << "Enter the name of the make command: " << endl;
+    string projectName = "project1";
+    // cin >> projectName;
+    cout << endl;
+
     /// ---------------------- LLM FLOWSCRIPT GENERATION ---------------------- ///
 
     // Import prompt and error files
@@ -448,11 +454,11 @@ int main()
 
         // Pass the input
 #ifdef __linux__
-        interpreter.setInput("make project1");
+        interpreter.setInput("make " + projectName);
 #elif _WIN32
-        interpreter.setInput("MinGW32-make project1");
+        interpreter.setInput("MinGW32-make " + projectName);
 #else
-        interpreter.setInput("make project1");
+        interpreter.setInput("make " + projectName);
 #endif
 
         // Parse flowscript file
@@ -469,6 +475,11 @@ int main()
             cout << "Generating flowscript again" << endl;
             continue;
         }
+        else
+        {
+            // Run FlowScript to compile, parse file, and ouput the errors
+            cout << "Compilation Output: " << interpreter.run() << endl;
+        }
     } while (interpreter.getErrorCode() == 1);
 
     /// ---------------------- TEST CODE AND ITERATE UNTIL IT FIXES IT ---------------------- ///
@@ -477,7 +488,7 @@ int main()
     do
     {
         // First, check if project does not have errors
-        ifstream errorFile("../Data/output_project1.json");
+        ifstream errorFile("../Data/output_" + projectName + ".json");
         string error = "", line = "";
         if (errorFile.is_open())
         {
@@ -497,7 +508,7 @@ int main()
         /// ---------------------- LLM TRIES TO GENERATE A FIX FOR THE CODE ---------------------- ///
 
         // Call LLM to fix the code
-        error = openFile("../Data/output_project1.json");
+        error = openFile("../Data/output_" + projectName + ".json");
         string prompt = openFile("../Data/gpt4all-mistral-prompt.txt");
         string jobFixCode = js.CreateJob("{\"job_type\": \"call_LLM\", \"input\": {\"ip\": \"http://localhost:4891/v1/chat/completions\", \"prompt\": \"" + prompt + error + "\", \"model\": \"mistral-7b-instruct-v0.1.Q4_0\"}}");
         int jobFixCodeID = json::parse(jobFixCode)["id"];
