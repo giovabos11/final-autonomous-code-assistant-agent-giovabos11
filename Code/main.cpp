@@ -374,8 +374,8 @@ int main()
 
     // Ask the user to input a project
     cout << "Enter the name of the make command: " << endl;
-    string projectName = "project1";
-    // cin >> projectName;
+    string projectName;
+    cin >> projectName;
     cout << endl;
 
     /// ---------------------- LLM FLOWSCRIPT GENERATION ---------------------- ///
