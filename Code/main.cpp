@@ -374,8 +374,8 @@ int main()
 
     // Ask the user to input a project
     cout << "Enter the name of the make command: " << endl;
-    string projectName;
-    cin >> projectName;
+    string projectName = "project1";
+    // cin >> projectName;
     cout << endl;
 
     /// ---------------------- LLM FLOWSCRIPT GENERATION ---------------------- ///
@@ -485,6 +485,7 @@ int main()
     /// ---------------------- TEST CODE AND ITERATE UNTIL IT FIXES IT ---------------------- ///
 
     json errorJson;
+    int first = true;
     do
     {
         // First, check if project does not have errors
@@ -509,7 +510,11 @@ int main()
 
         // Call LLM to fix the code
         error = openFile("../Data/output_" + projectName + ".json");
-        string prompt = openFile("../Data/gpt4all-mistral-prompt.txt");
+        string prompt;
+        if (first)
+            prompt = openFile("../Data/fix-code-prompt.txt");
+        else
+            prompt = openFile("../Data/try-again-fix-code-prompt.txt");
         string jobFixCode = js.CreateJob("{\"job_type\": \"call_LLM\", \"input\": {\"ip\": \"http://localhost:4891/v1/chat/completions\", \"prompt\": \"" + prompt + error + "\", \"model\": \"mistral-7b-instruct-v0.1.Q4_0\"}}");
         int jobFixCodeID = json::parse(jobFixCode)["id"];
 
@@ -526,6 +531,8 @@ int main()
 
         // Run FlowScript to compile, parse file, and ouput the errors
         cout << "Compilation Output: " << interpreter.run() << endl;
+
+        first = false;
     } while (!errorJson.is_null());
 
     // Destroy Job System
