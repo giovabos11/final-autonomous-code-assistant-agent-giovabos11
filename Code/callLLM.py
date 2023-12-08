@@ -29,21 +29,21 @@ data = {
             'content': args.prompt,
         },
     ],
-    'max_tokens': 4096,
-    'response_format': {
-        'type': 'json_object'
-    },
-    'temperature': 0.7,
+    'max_tokens': 1024,
+    # 'response_format': {
+    #     'type': 'json_object'
+    # },
+    #'temperature': 0.7,
 }
 
-try :
-    response = requests.post(args.ip, headers = headers, json = data)
-except requests.exceptions.ConnectionError:
-    print("Connection error")
-    exit()
+#try :
+response = requests.post(args.ip, headers = headers, json = data)
+# except requests.exceptions.ConnectionError:
+#     print("Connection error")
+#     exit()
 
-if not response.status_code == 200:
-    print("Connection error")
-    exit()
+# if not response.status_code == 200:
+#     print("Connection error")
+#     exit()
 
 print(json.dumps(response.json()))

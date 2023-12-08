@@ -508,14 +508,37 @@ int main()
 
         /// ---------------------- LLM TRIES TO GENERATE A FIX FOR THE CODE ---------------------- ///
 
-        // Call LLM to fix the code
+        // Read prompt to pass to the LLM
         error = openFile("../Data/output_" + projectName + ".json");
         string prompt;
         if (first)
             prompt = openFile("../Data/fix-code-prompt.txt");
         else
             prompt = openFile("../Data/fix-code-prompt.txt");
-        string jobFixCode = js.CreateJob("{\"job_type\": \"call_LLM\", \"input\": {\"ip\": \"http://localhost:4891/v1/chat/completions\", \"prompt\": \"" + prompt + error + "\", \"model\": \"mistral-7b-instruct-v0.1.Q4_0\"}}");
+
+        // Read api key
+        ifstream dotEnv("./.env");
+        string apiKey = "";
+        line = "";
+        if (dotEnv.is_open())
+        {
+            while (getline(dotEnv, line))
+                apiKey += line + " ";
+            dotEnv.close();
+        }
+        else
+        {
+            cout << "You need an API key to call the LLM" << endl;
+            return 0;
+        }
+        if (apiKey == "")
+        {
+            cout << "You need an API key to call the LLM" << endl;
+            return 0;
+        }
+
+        // Call LLM to fix the code
+        string jobFixCode = js.CreateJob("{\"job_type\": \"call_LLM\", \"input\": {\"ip\": \"https://api.openai.com/v1/chat/completions\", \"prompt\": \"" + prompt + error + "\", \"model\": \"gpt-3.5-turbo\", \"key\": \"" + apiKey + "\"}}");
         int jobFixCodeID = json::parse(jobFixCode)["id"];
 
         // Check job status and try to complete the job
@@ -527,9 +550,74 @@ int main()
         // Get job output
         string outputFixCode = json::parse(js.CompleteJob(jobFixCode))["output"];
 
-        // Fix code in the given line
+        cout << "ChatGPT3.5 output: " << outputFixCode << endl;
 
-        // Run FlowScript to compile, parse file, and ouput the errors
+        // Clean LLM Output
+        cleanJson(outputFixCode);
+        // Replace \\n to \n
+        size_t start_pos = 0;
+        string from = "\\\\n", to = "\\n";
+        while ((start_pos = outputFixCode.find(from, start_pos)) != std::string::npos)
+        {
+            outputFixCode.replace(start_pos, from.length(), to);
+            start_pos += to.length();
+        }
+
+        // Store LLM output in a JSON object
+        json fixJson;
+        try
+        {
+            fixJson = json::parse(outputFixCode);
+        }
+        // If it fails to read the JSON, ask the LLM to generate it again
+        catch (const exception &e)
+        {
+            cout << "LLM returned poorly formated JSON" << endl;
+            continue;
+        }
+
+        // For each fix
+        for (int i = 0; i < fixJson.size(); i++)
+        {
+            // TODO: Print out here fix information for each file
+            // Fix code in the given line
+            int lineNumber = fixJson[i]["line"];
+            string fix = fixJson[i]["fixed_code"];
+            ifstream inputFile(fixJson[i]["file_name"]);
+            vector<string> lines;
+            string line = "";
+            if (inputFile.is_open())
+            {
+                while (getline(inputFile, line))
+                {
+                    lines.push_back(line);
+                }
+                inputFile.close();
+            }
+            int currentLine = -2; // Number of lines to grab above and bellow * -1
+            while (lineNumber + currentLine - 1 < 0)
+                currentLine++;
+            lines[lineNumber + currentLine - 1] = "";
+            for (int i = 0; i < fix.size(); i++)
+            {
+                if (fix[i] == '\n')
+                {
+                    currentLine++;
+                    if (lineNumber + currentLine - 1 < lines.size() && lineNumber + currentLine - 1 >= 0 && i != fix.size() - 1)
+                        lines[lineNumber + currentLine - 1] = "";
+                }
+                else
+                {
+                    lines[lineNumber + currentLine - 1] += fix[i];
+                }
+            }
+            ofstream o(fixJson[i]["file_name"]);
+            for (string line : lines)
+                o << line << endl;
+            o.close();
+        }
+
+        // Run FlowScript again to compile, parse file, and ouput the errors
         cout << "Compilation Output: " << interpreter.run() << endl;
 
         first = false;
