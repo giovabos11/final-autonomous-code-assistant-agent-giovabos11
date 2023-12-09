@@ -610,8 +610,22 @@ int main()
         for (int i = 0; i < fixJson.size(); i++)
         {
             // Fix code in the given line
-            int lineNumber = fixJson[i]["line"];
-            string fix = fixJson[i]["fixed_code"], file_name = fixJson[i]["file_name"];
+            int lineNumber;
+            string fix, file_name, resolution;
+            try
+            {
+                lineNumber = fixJson[i]["line"];
+                fix = fixJson[i]["fixed_code"];
+                file_name = fixJson[i]["file_name"];
+                resolution = fixJson[i]["resolution"];
+            }
+            // If it fails to read the JSON, ask the LLM to generate it again
+            catch (const exception &e)
+            {
+                cout << "LLM returned poorly formated JSON" << endl
+                     << endl;
+                continue;
+            }
 
             // Print fixes and resolutions
             cout << endl
