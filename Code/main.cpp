@@ -373,7 +373,7 @@ int main()
     js.RegisterJob("output_to_file", new Job(outputToFile, 2));
 
     // Ask the user to input a project
-    cout << "Enter the name of the make command: " << endl;
+    cout << "Enter the name of the make command: ";
     string projectName = "";
     cin >> projectName;
     cout << endl;
@@ -403,8 +403,16 @@ int main()
         string outputFlowscript;
         outputFlowscript = json::parse(js.CompleteJob(jobFlowscript))["output"];
 
-        // Print job output
-        cout << outputFlowscript << endl;
+        // Check if there were any errors with the call
+        if (outputFlowscript == "Invalid arguments provided" ||
+            outputFlowscript == "LLM connection error" ||
+            outputFlowscript == "Output JSON error" ||
+            outputFlowscript == "Failed to open pipe")
+        {
+            cout << "LLM call failed" << endl
+                 << endl;
+            return 0;
+        }
 
         // Clean LLM output
         outputFlowscript = outputFlowscript.substr(1, outputFlowscript.size() - 2);
@@ -415,6 +423,10 @@ int main()
             outputFlowscript.replace(start_pos, from.length(), to);
             start_pos += to.length();
         }
+        // Print job output
+        cout << "FlowScript Generated: " << endl
+             << outputFlowscript << endl
+             << endl;
 
         /// ---------------------- LLM FLOWSCRIPT TO FILE ---------------------- ///
 
@@ -555,6 +567,17 @@ int main()
 
         // Get job output
         string outputFixCode = json::parse(js.CompleteJob(jobFixCode))["output"];
+
+        // Check if there were any errors with the call
+        if (outputFixCode == "Invalid arguments provided" ||
+            outputFixCode == "LLM connection error" ||
+            outputFixCode == "Output JSON error" ||
+            outputFixCode == "Failed to open pipe")
+        {
+            cout << "LLM call failed" << endl
+                 << endl;
+            return 0;
+        }
 
         // Clean LLM Output
         cleanJson(outputFixCode);
