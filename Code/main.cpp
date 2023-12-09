@@ -636,6 +636,7 @@ int main()
             cout << endl
                  << "File Name: " << file_name << endl;
             cout << "Line number: " << lineNumber << endl;
+            cout << "Resolution explanation: " << resolution << endl;
             cout << "Fixed code: " << endl
                  << fix << endl
                  << endl;
