@@ -425,7 +425,7 @@ int main()
         }
 
         /// TEST: manually set outputFlowscript to the right FlowScript file to test the rest of the code
-        outputFlowscript = "digraph jobs {\\n    input -> compile -> parse_file -> output_to_file -> output\\n}\\n";
+        // outputFlowscript = "digraph jobs {\\n    input -> compile -> parse_file -> output_to_file -> output\\n}\\n";
 
         // Print job output
         cout << "FlowScript Generated: " << endl
