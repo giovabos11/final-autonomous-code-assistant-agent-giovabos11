@@ -431,7 +431,7 @@ int main()
         /// ---------------------- LLM FLOWSCRIPT TO FILE ---------------------- ///
 
         /// TEST: manually set outputFlowscript to the right FlowScript file to test the rest of the code
-        outputFlowscript = "digraph jobs {\\n    input -> compile -> parse_file -> output_to_file -> output\\n}\\n";
+        // outputFlowscript = "digraph jobs {\\n    input -> compile -> parse_file -> output_to_file -> output\\n}\\n";
 
         // Spin off job and get job ID
         string jobFlowscriptFile = js.CreateJob("{\"job_type\": \"output_to_file\", \"input\": {\"file_name\" : \"compiling_pipeline.dot\", \"content\": \"" + outputFlowscript + "\"}}");
@@ -479,8 +479,7 @@ int main()
         {
             cout << "Couldn't compile flowscript: " << endl;
             cout << interpreter.getErrorMessage() << endl;
-            cout << "Error line: " << interpreter.getErrorLine() << endl
-                 << endl;
+            cout << "Error line: " << interpreter.getErrorLine() << endl;
 
             cout << "Generating FlowScript again" << endl
                  << endl;
@@ -509,6 +508,11 @@ int main()
             while (getline(errorFile, line))
                 error += line + " ";
             errorFile.close();
+        }
+        else
+        {
+            cout << "FlowScript did not generate any output";
+            return 0;
         }
         errorJson = json::parse(error);
 
