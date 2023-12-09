@@ -374,48 +374,47 @@ int main()
 
     // Ask the user to input a project
     cout << "Enter the name of the make command: " << endl;
-    string projectName = "project1";
-    // cin >> projectName;
+    string projectName = "";
+    cin >> projectName;
     cout << endl;
 
     /// ---------------------- LLM FLOWSCRIPT GENERATION ---------------------- ///
 
     // Import prompt and error files
-    // string promptFlowscript;
-    // promptFlowscript = openFile("../Data/flowscript-prompt.txt");
+    string promptFlowscript;
+    promptFlowscript = openFile("../Data/flowscript-prompt.txt");
 
     // Loop LLM Flowscript generation until it generates valid FlowScript
     do
     {
-        // // Spin off job and get job ID
-        // string jobFlowscript = js.CreateJob("{\"job_type\": \"call_LLM\", \"input\": {\"ip\": \"http://localhost:4891/v1/chat/completions\", \"prompt\": \"" + promptFlowscript + "\", \"model\": \"mistral-7b-instruct-v0.1.Q4_0\"}}");
-        // int jobFlowscriptID = json::parse(jobFlowscript)["id"];
+        // Spin off job and get job ID
+        string jobFlowscript = js.CreateJob("{\"job_type\": \"call_LLM\", \"input\": {\"ip\": \"http://localhost:4891/v1/chat/completions\", \"prompt\": \"" + promptFlowscript + "\", \"model\": \"mistral-7b-instruct-v0.1.Q4_0\"}}");
+        int jobFlowscriptID = json::parse(jobFlowscript)["id"];
 
-        // cout << "Generate FlowScript Job running:" << endl;
+        cout << "Generate FlowScript Job running... ";
 
-        // // Check job status and try to complete the jobs
-        // while (json::parse(js.AreJobsRunning())["are_jobs_running"])
-        // {
-        //     //  Wait to complete all the jobs
-        // }
+        // Check job status and try to complete the jobs
+        while (json::parse(js.AreJobsRunning())["are_jobs_running"])
+        {
+            //  Wait to complete all the jobs
+        }
 
         // // Get job outputs
         string outputFlowscript;
-        // outputFlowscript = json::parse(js.CompleteJob(jobFlowscript))["output"];
+        outputFlowscript = json::parse(js.CompleteJob(jobFlowscript))["output"];
 
-        // // Print job output
-        // cout << "Job ID " << jobFlowscriptID << " output: " << outputFlowscript << endl
-        //      << endl;
+        // Print job output
+        cout << outputFlowscript << endl;
 
-        // // Clean LLM output
-        // outputFlowscript = outputFlowscript.substr(1, outputFlowscript.size() - 2);
-        // size_t start_pos = 0;
-        // string from = "`", to = "";
-        // while ((start_pos = outputFlowscript.find(from, start_pos)) != std::string::npos)
-        // {
-        //     outputFlowscript.replace(start_pos, from.length(), to);
-        //     start_pos += to.length();
-        // }
+        // Clean LLM output
+        outputFlowscript = outputFlowscript.substr(1, outputFlowscript.size() - 2);
+        size_t start_pos = 0;
+        string from = "`", to = "";
+        while ((start_pos = outputFlowscript.find(from, start_pos)) != std::string::npos)
+        {
+            outputFlowscript.replace(start_pos, from.length(), to);
+            start_pos += to.length();
+        }
 
         /// ---------------------- LLM FLOWSCRIPT TO FILE ---------------------- ///
 
@@ -426,7 +425,7 @@ int main()
         string jobFlowscriptFile = js.CreateJob("{\"job_type\": \"output_to_file\", \"input\": {\"file_name\" : \"compiling_pipeline.dot\", \"content\": \"" + outputFlowscript + "\"}}");
         int jobFlowscriptFileID = json::parse(jobFlowscriptFile)["id"];
 
-        cout << "FlowScript to File Job running:" << endl;
+        cout << "FlowScript to File Job running... ";
 
         // Check job status and try to complete the jobs
         while (json::parse(js.AreJobsRunning())["are_jobs_running"])
@@ -439,8 +438,7 @@ int main()
         outputFlowscriptFile = json::parse(js.CompleteJob(jobFlowscriptFile))["output"];
 
         // Print job output
-        cout << "Job ID " << jobFlowscriptFileID << " output: " << outputFlowscriptFile << endl
-             << endl;
+        cout << outputFlowscriptFile << endl;
 
         /// ---------------------- RUN FLOWSCRIPT TO GET ERRORS ---------------------- ///
 
@@ -472,13 +470,15 @@ int main()
             cout << "Error line: " << interpreter.getErrorLine() << endl
                  << endl;
 
-            cout << "Generating flowscript again" << endl;
+            cout << "Generating FlowScript again" << endl
+                 << endl;
             continue;
         }
         else
         {
             // Run FlowScript to compile, parse file, and ouput the errors
-            cout << "Compilation Output: " << interpreter.run() << endl;
+            cout << "Running FlowScript to get errors... " << interpreter.run() << endl
+                 << endl;
         }
     } while (interpreter.getErrorCode() == 1);
 
@@ -488,6 +488,7 @@ int main()
     int first = true;
     do
     {
+        cout << "Checking if source code has compilation errors... ";
         // First, check if project does not have errors
         ifstream errorFile("../Data/output_" + projectName + ".json");
         string error = "", line = "";
@@ -505,9 +506,14 @@ int main()
             cout << "All errors fixed!" << endl;
             return 0;
         }
+        else
+        {
+            cout << "Errors detected!" << endl;
+        }
 
         /// ---------------------- LLM TRIES TO GENERATE A FIX FOR THE CODE ---------------------- ///
 
+        cout << "Fix C++ Code Job running... ";
         // Read prompt to pass to the LLM
         error = openFile("../Data/output_" + projectName + ".json");
         string prompt;
@@ -550,8 +556,6 @@ int main()
         // Get job output
         string outputFixCode = json::parse(js.CompleteJob(jobFixCode))["output"];
 
-        cout << "ChatGPT3.5 output: " << outputFixCode << endl;
-
         // Clean LLM Output
         cleanJson(outputFixCode);
         // Replace \\n to \n
@@ -572,18 +576,29 @@ int main()
         // If it fails to read the JSON, ask the LLM to generate it again
         catch (const exception &e)
         {
-            cout << "LLM returned poorly formated JSON" << endl;
+            cout << "LLM returned poorly formated JSON" << endl
+                 << endl;
             continue;
         }
+
+        cout << "ChatGPT Fix provided: " << endl;
 
         // For each fix
         for (int i = 0; i < fixJson.size(); i++)
         {
-            // TODO: Print out here fix information for each file
             // Fix code in the given line
             int lineNumber = fixJson[i]["line"];
-            string fix = fixJson[i]["fixed_code"];
-            ifstream inputFile(fixJson[i]["file_name"]);
+            string fix = fixJson[i]["fixed_code"], file_name = fixJson[i]["file_name"];
+
+            // Print fixes and resolutions
+            cout << endl
+                 << "File Name: " << file_name << endl;
+            cout << "Line number: " << lineNumber << endl;
+            cout << "Fixed code: " << endl
+                 << fix << endl
+                 << endl;
+
+            ifstream inputFile(file_name);
             vector<string> lines;
             string line = "";
             if (inputFile.is_open())
@@ -611,15 +626,20 @@ int main()
                     lines[lineNumber + currentLine - 1] += fix[i];
                 }
             }
-            ofstream o(fixJson[i]["file_name"]);
+            ofstream o(file_name);
             for (string line : lines)
                 o << line << endl;
             o.close();
+
+            if (i < fixJson.size() - 1)
+                cout << "=================================" << endl;
         }
 
         // Run FlowScript again to compile, parse file, and ouput the errors
-        cout << "Compilation Output: " << interpreter.run() << endl;
+        cout << "Running FlowScript to get errors... " << interpreter.run() << endl
+             << endl;
 
+        // Change variable to pass try-again prompt
         first = false;
     } while (!errorJson.is_null());
 
